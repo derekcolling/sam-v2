@@ -1,0 +1,28 @@
+{
+  "name": "Ask Sam — Downtown Santa Monica",
+  "short_name": "Ask Sam",
+  "description": "Your friendly guide to Downtown Santa Monica",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#203141",
+  "theme_color": "#6BC4BB",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/images/dtsm-logo-circle.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/images/dtsm-logo-circle.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/images/dtsm-logo-circle.jpeg",
+      "sizes": "180x180",
+      "type": "image/jpeg",
+      "purpose": "apple-touch-icon"
+    }
+  ]
+}
