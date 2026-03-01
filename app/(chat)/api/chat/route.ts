@@ -2,6 +2,7 @@ import { geolocation } from "@vercel/functions";
 import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { type TripContext, formatTripContext } from "@/lib/ai/trip-context";
 import { getBeachSafety } from "@/lib/ai/tools/get-beach-safety";
 import { getBusinessRecommendations } from "@/lib/ai/tools/get-business-recommendations";
 import { getEvents } from "@/lib/ai/tools/get-events";
@@ -14,7 +15,7 @@ export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
-    const { messages, sessionContext } = await request.json();
+    const { messages, tripContext }: { messages: any[]; tripContext: TripContext } = await request.json();
 
     const { longitude, latitude, city, country } = geolocation(request);
 
@@ -40,7 +41,11 @@ export async function POST(request: Request) {
 
     const result = streamText({
       model: getLanguageModel("claude-sonnet-4-6"),
-      system: systemPrompt({ requestHints, sessionContext, businessContext }),
+      system: systemPrompt({
+        requestHints,
+        sessionContext: tripContext ? formatTripContext(tripContext) || undefined : undefined,
+        businessContext
+      }),
       messages: modelMessages,
       stopWhen: stepCountIs(5),
       maxRetries: 3,
