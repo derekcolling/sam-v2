@@ -3,10 +3,12 @@ import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { getBeachSafety } from "@/lib/ai/tools/get-beach-safety";
+import { getBusinessRecommendations } from "@/lib/ai/tools/get-business-recommendations";
 import { getEvents } from "@/lib/ai/tools/get-events";
 import { getParking } from "@/lib/ai/tools/get-parking";
 import { getWeather } from "@/lib/ai/tools/get-weather";
-import { saveUserProfile } from "@/lib/ai/tools/save-user-profile";
+import { updateTripContext } from "@/lib/ai/tools/update-trip-context";
+import { retrieveBusinessContext } from "@/lib/data/rag";
 
 export const maxDuration = 60;
 
@@ -23,11 +25,22 @@ export async function POST(request: Request) {
       country,
     };
 
+    // Grab the last user message to use as the RAG query.
+    // Falls back gracefully to full business directory if RAG isn't configured.
+    const lastUserMessage =
+      messages
+        .slice()
+        .reverse()
+        .find((m: { role: string }) => m.role === "user")
+        ?.parts?.find((p: { type: string }) => p.type === "text")?.text ?? "";
+
+    const businessContext = await retrieveBusinessContext(lastUserMessage);
+
     const modelMessages = await convertToModelMessages(messages);
 
     const result = streamText({
       model: getLanguageModel("claude-sonnet-4-6"),
-      system: systemPrompt({ requestHints, sessionContext }),
+      system: systemPrompt({ requestHints, sessionContext, businessContext }),
       messages: modelMessages,
       stopWhen: stepCountIs(5),
       maxRetries: 3,
@@ -36,7 +49,8 @@ export async function POST(request: Request) {
         getParking,
         getBeachSafety,
         getEvents,
-        saveUserProfile,
+        getBusinessRecommendations,
+        updateTripContext,
       },
     });
 

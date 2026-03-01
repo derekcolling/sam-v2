@@ -4,6 +4,7 @@ import type { UIMessage } from "ai";
 import cx from "classnames";
 import { Streamdown } from "streamdown";
 import { BeachSafetyCard } from "./beach-safety-card";
+import { BusinessRecommendations } from "./business-recommendations";
 import { EventsCalendar } from "./events-calendar";
 import { ParkingStatus } from "./parking-status";
 import { Weather } from "./weather";
@@ -143,8 +144,30 @@ export function PreviewMessage({
               );
             }
 
-            // saveUserProfile renders nothing visible
-            if (part.type === "tool-saveUserProfile") {
+            if (part.type === "tool-getBusinessRecommendations") {
+              const widthClass = "w-[min(100%,450px)]";
+              if (part.state === "output-available") {
+                return (
+                  <div className={widthClass} key={part.toolCallId}>
+                    <BusinessRecommendations
+                      data={part.output as never}
+                    />
+                  </div>
+                );
+              }
+              return (
+                <div className={widthClass} key={part.toolCallId}>
+                  <div className="flex items-center gap-2 rounded-2xl bg-muted/50 p-4 text-muted-foreground text-sm">
+                    <span className="animate-pulse">
+                      Finding the best spots...
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+
+            // updateTripContext renders nothing visible
+            if (part.type === "tool-updateTripContext") {
               return null;
             }
 

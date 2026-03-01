@@ -4,25 +4,32 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { UIMessage } from "ai";
+import {
+  type TripContext,
+  createEmptyTripContext,
+  mergeTripContextUpdate,
+} from "@/lib/ai/trip-context";
 import { ChatHeader } from "./header";
 import { ChatInput } from "./input";
 import { Messages } from "./messages";
 
 export function Chat() {
-  const [sessionContext, setSessionContext] = useState<string>("");
-  const sessionContextRef = useRef<string>("");
+  const [tripContext, setTripContext] = useState<TripContext>(
+    createEmptyTripContext(),
+  );
+  const tripContextRef = useRef<TripContext>(createEmptyTripContext());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Keep ref in sync so the transport closure always reads the latest value
   useEffect(() => {
-    sessionContextRef.current = sessionContext;
-  }, [sessionContext]);
+    tripContextRef.current = tripContext;
+  }, [tripContext]);
 
   const transport = useRef(
     new DefaultChatTransport({
       api: "/api/chat",
-      body: () => ({ sessionContext: sessionContextRef.current }),
-    })
+      body: () => ({ tripContext: tripContextRef.current }),
+    }),
   );
 
   const {
@@ -34,19 +41,18 @@ export function Chat() {
   } = useChat({
     transport: transport.current,
     onFinish: ({ messages: finishedMessages }) => {
-      // Extract any saved profile content from saveUserProfile tool results
+      // Extract trip context updates from updateTripContext tool results
       for (const msg of finishedMessages) {
         for (const part of msg.parts) {
           if (
-            part.type === "tool-saveUserProfile" &&
+            part.type === "tool-updateTripContext" &&
             part.state === "output-available" &&
             part.output &&
-            "savedContent" in (part.output as Record<string, unknown>)
+            "updates" in (part.output as Record<string, unknown>)
           ) {
-            const saved = (part.output as Record<string, unknown>).savedContent as string;
-            setSessionContext((prev) =>
-              prev ? `${prev}\n- ${saved}` : `- ${saved}`
-            );
+            const updates = (part.output as Record<string, unknown>)
+              .updates as Partial<TripContext>;
+            setTripContext((prev) => mergeTripContextUpdate(prev, updates));
           }
         }
       }
@@ -65,7 +71,7 @@ export function Chat() {
 
   const handleNewChat = useCallback(() => {
     setMessages([]);
-    setSessionContext("");
+    setTripContext(createEmptyTripContext());
   }, [setMessages]);
 
   const handleSend = useCallback(
@@ -75,7 +81,7 @@ export function Chat() {
         parts: [{ type: "text", text }],
       });
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   const isEmpty = messages.length === 0;

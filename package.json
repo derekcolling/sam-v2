@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "ultracite check",
-    "format": "ultracite fix"
+    "format": "ultracite fix",
+    "seed": "tsx scripts/seed-pinecone.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.46",
@@ -33,6 +34,8 @@
     "streamdown": "^2.0.1",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
+    "@pinecone-database/pinecone": "^6.0.0",
+    "openai": "^4.91.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
