@@ -13,12 +13,13 @@
  * Safe to re-run — Pinecone upsert is idempotent.
  */
 
-import "dotenv/config";
+import { config } from "dotenv";
+config({ path: ".env.local" });
 import { Pinecone } from "@pinecone-database/pinecone";
 import { businesses } from "../lib/data/businesses";
 import { embedBusiness, EMBEDDING_DIMENSIONS } from "../lib/data/embedder";
 
-const PINECONE_INDEX_NAME = "sam-dtsm-businesses";
+const PINECONE_INDEX_NAME = "sam-chat";
 
 async function seed() {
     const pineconeApiKey = process.env.PINECONE_API_KEY;
@@ -61,7 +62,7 @@ async function seed() {
         console.log(`✅ Index "${PINECONE_INDEX_NAME}" already exists\n`);
     }
 
-    const index = pinecone.index(PINECONE_INDEX_NAME);
+    const index = pinecone.index(PINECONE_INDEX_NAME).namespace("sam-v2");
     const active = businesses.filter((b) => b.active);
 
     console.log(`📝 Embedding ${active.length} businesses...\n`);

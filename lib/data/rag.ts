@@ -16,7 +16,7 @@ import { embedText } from "./embedder";
 import { formatBusinessForPrompt } from "@/lib/data/schema";
 import { getBusinessDirectory } from "./knowledge-base";
 
-const PINECONE_INDEX_NAME = "sam-dtsm-businesses";
+const PINECONE_INDEX_NAME = "sam-chat";
 const TOP_K = 6; // how many businesses to retrieve per query
 
 let pineconeClient: Pinecone | null = null;
@@ -57,7 +57,7 @@ export async function retrieveBusinessContext(userQuery: string): Promise<string
         const client = getPineconeClient();
         if (!client) return getBusinessDirectory();
 
-        const index = client.index(PINECONE_INDEX_NAME);
+        const index = client.index(PINECONE_INDEX_NAME).namespace("sam-v2");
 
         // Embed the user's query
         const queryVector = await embedText(userQuery);

@@ -13,15 +13,16 @@ pnpm dev                  # Dev server (localhost:3000)
 pnpm build                # Production build
 pnpm lint                 # Lint via Ultracite (Biome-based)
 pnpm format               # Auto-fix lint/format issues
+pnpm seed                 # Seed Pinecone with business embeddings
 ```
 
 ---
 
 ## Architecture
 
-**Stack:** Next.js 16, Vercel AI SDK v6, Anthropic (claude-sonnet-4-6), Tailwind CSS v4, framer-motion
+**Stack:** Next.js 16, Vercel AI SDK v6, Anthropic (claude-sonnet-4-6), OpenAI (embeddings), Pinecone (vector DB), Tailwind CSS v4, framer-motion
 
-**No auth, no database (yet), no Redis, no sidebar, no model switcher.**
+**RAG Pipeline:** Semantic retrieval for business profiles via Pinecone + OpenAI embeddings (`text-embedding-3-small`).
 
 **Request flow:** User → `app/(chat)/page.tsx` → `<Chat />` → `useChat()` → `app/(chat)/api/chat/route.ts` → Anthropic API → streaming → client
 
@@ -40,16 +41,17 @@ pnpm format               # Auto-fix lint/format issues
 - `components/parking-status.tsx` — parking card
 - `components/beach-safety-card.tsx` — beach conditions card
 - `components/events-calendar.tsx` — events list card
-- `lib/ai/prompts.ts` — Sam's system prompt (persona + business directory)
+- `lib/ai/prompts.ts` — Sam's system prompt (context-aware, dynamic injection)
 - `lib/ai/providers.ts` — `getLanguageModel()` using `@ai-sdk/anthropic`
-- `lib/ai/tools/` — AI function-calling tools (getWeather, getParking, getBeachSafety, getEvents, saveUserProfile)
+- `lib/ai/tools/` — AI tools (getWeather, getParking, getBeachSafety, getEvents, updateTripContext, getBusinessRecommendations)
+- `lib/data/` — RAG & Data Layer (`schema.ts`, `businesses.ts`, `rag.ts`, `embedder.ts`, `knowledge-base.ts`)
+- `scripts/seed-pinecone.ts` — embedding + indexing pipeline
 
-**Session Memory:**
-- `saveUserProfile` tool returns `{ savedContent }` to client
-- `chat.tsx` accumulates context in `useState<string>`
-- Context passed as `body.sessionContext` in every subsequent `useChat` request
-- Appended to system prompt on server
-- Clears when "New chat" is tapped or tab closes — no DB needed
+**Session Memory & Context:**
+- `updateTripContext` tool persists visitor preferences/history in memory
+- `useChat` body includes `sessionContext` which is injected into the system prompt
+- RAG retrieval extracts relevant business context per user message
+- Firestore integration planned for Phase 2 persistence
 
 **PWA:**
 - `public/manifest.json` — `display: standalone`, theme `#6BC4BB`
@@ -91,7 +93,9 @@ export const myTool = tool({
 ## Environment Variables
 
 Requires `.env.local`:
-- `ANTHROPIC_API_KEY` — required (only required env var)
+- `ANTHROPIC_API_KEY` — powers Claude chat model
+- `OPENAI_API_KEY` — used for text embeddings (1024 dim)
+- `PINECONE_API_KEY` — vector database access
 
 ---
 

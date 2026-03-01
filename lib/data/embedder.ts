@@ -9,7 +9,7 @@ import { formatBusinessForPrompt } from "@/lib/data/schema";
 import type { BusinessProfile } from "@/lib/data/schema";
 
 const EMBEDDING_MODEL = "text-embedding-3-small";
-const EMBEDDING_DIMENSIONS = 1536;
+const EMBEDDING_DIMENSIONS = 1024; // Match existing 'sam-chat' index
 
 let openaiClient: OpenAI | null = null;
 
@@ -32,6 +32,7 @@ export async function embedText(text: string): Promise<number[]> {
   const response = await client.embeddings.create({
     model: EMBEDDING_MODEL,
     input: text,
+    dimensions: EMBEDDING_DIMENSIONS,
   });
   return response.data[0].embedding;
 }
